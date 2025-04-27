@@ -10,13 +10,14 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {TopicMapper.class})
 public interface HabitMapper {
     
     HabitDto toHabitDTO(Habit habit);
     
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "user", ignore = true)
+    @Mapping(target = "topics", ignore = true)
     Habit toHabit(HabitCreationDto habitDto);
     
     List<HabitDto> toHabitDTOList(List<Habit> habits);

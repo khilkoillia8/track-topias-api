@@ -1,9 +1,10 @@
 package com.tracktopiasapi.one.model;
 import jakarta.persistence.*;
 import lombok.*;
-import com.tracktopiasapi.one.model.User;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "habits")
@@ -11,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"topics"})
+@EqualsAndHashCode(exclude = {"topics"})
 public class Habit {
 
     @Id
@@ -23,7 +26,6 @@ public class Habit {
     @Column(length = 1000)
     private String description;
 
-
     @ElementCollection
     @CollectionTable(name = "habit_weekdays", joinColumns = @JoinColumn(name = "habit_id"))
     @Column(name = "weekday", nullable = false)
@@ -35,4 +37,12 @@ public class Habit {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    
+    @ManyToMany
+    @JoinTable(
+        name = "habit_topics",
+        joinColumns = @JoinColumn(name = "habit_id"),
+        inverseJoinColumns = @JoinColumn(name = "topic_id")
+    )
+    private Set<Topic> topics = new HashSet<>();
 }

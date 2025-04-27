@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "missions")
@@ -11,6 +13,8 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(exclude = {"topics"})
+@EqualsAndHashCode(exclude = {"topics"})
 public class Mission {
 
     @Id
@@ -36,4 +40,12 @@ public class Mission {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+    
+    @ManyToMany
+    @JoinTable(
+        name = "mission_topics",
+        joinColumns = @JoinColumn(name = "mission_id"),
+        inverseJoinColumns = @JoinColumn(name = "topic_id")
+    )
+    private Set<Topic> topics = new HashSet<>();
 }

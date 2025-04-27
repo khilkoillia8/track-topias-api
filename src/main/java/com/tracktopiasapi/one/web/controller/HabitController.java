@@ -2,11 +2,11 @@ package com.tracktopiasapi.one.web.controller;
 
 import com.tracktopiasapi.one.config.UserDetailsImpl;
 import com.tracktopiasapi.one.model.Habit;
-import com.tracktopiasapi.one.model.User;
 import com.tracktopiasapi.one.services.HabitService;
 import com.tracktopiasapi.one.web.dto.HabitCreationDto;
 import com.tracktopiasapi.one.web.dto.HabitDto;
 import com.tracktopiasapi.one.model.mapper.HabitMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,20 +36,29 @@ public class HabitController {
 
     @PostMapping
     public ResponseEntity<HabitDto> createHabit(
-            @RequestBody HabitCreationDto habitDto,
+            @RequestBody @Valid HabitCreationDto habitDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
-        Habit habit = habitMapper.toHabit(habitDto);
-        Habit createdHabit = habitService.createHabit(habit, userDetails);
-        return ResponseEntity.ok(habitMapper.toHabitDTO(createdHabit));
+        try {
+            Habit habit = habitMapper.toHabit(habitDto);
+            Habit createdHabit = habitService.createHabit(habit, habitDto, userDetails);
+            return ResponseEntity.ok(habitMapper.toHabitDTO(createdHabit));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<HabitDto> updateHabit(
             @PathVariable Long id,
             @RequestBody HabitCreationDto habitDto) {
-        Habit habitDetails = habitMapper.toHabit(habitDto);
-        return ResponseEntity.of(
-                habitService.updateHabit(id, habitDetails).map(habitMapper::toHabitDTO));
+        try {
+            Habit habitDetails = habitMapper.toHabit(habitDto);
+            return ResponseEntity.of(
+                    habitService.updateHabit(id, habitDetails, habitDto.getTopicIds())
+                            .map(habitMapper::toHabitDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @DeleteMapping("/{id}")
