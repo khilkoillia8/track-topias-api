@@ -21,4 +21,8 @@ public interface HabitService {
     boolean deleteHabit(Long id);
 
     List<Habit> getAllHabitsByUserId(Long id);
+    
+    Habit resetHabit(Long id);
+    
+    Habit regenerateHabitInstances(Long id);
 }

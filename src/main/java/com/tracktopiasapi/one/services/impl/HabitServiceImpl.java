@@ -6,6 +6,7 @@ import com.tracktopiasapi.one.model.Topic;
 import com.tracktopiasapi.one.model.User;
 import com.tracktopiasapi.one.repository.HabitRepository;
 import com.tracktopiasapi.one.repository.UserRepository;
+import com.tracktopiasapi.one.services.HabitInstanceService;
 import com.tracktopiasapi.one.services.HabitService;
 import com.tracktopiasapi.one.services.LevelService;
 import com.tracktopiasapi.one.services.TopicService;
@@ -26,6 +27,7 @@ public class HabitServiceImpl implements HabitService {
     private final UserRepository userRepository;
     private final LevelService levelService;
     private final TopicService topicService;
+    private final HabitInstanceService habitInstanceService;
 
     @Override
     public List<Habit> getAllHabits() {
@@ -54,8 +56,12 @@ public class HabitServiceImpl implements HabitService {
         Set<Topic> topics = topicService.getTopicsByIds(habitDto.getTopicIds(), user.getId());
         habit.setUser(user);
         habit.setTopics(topics);
-        
-        return habitRepository.save(habit);
+
+        Habit savedHabit = habitRepository.save(habit);
+
+        habitInstanceService.generateHabitInstances(savedHabit.getId());
+
+        return savedHabit;
     }
 
     @Override
@@ -63,8 +69,6 @@ public class HabitServiceImpl implements HabitService {
     public Optional<Habit> updateHabit(Long id, Habit habitDetails, Set<Long> topicIds) {
         return habitRepository.findById(id)
                 .map(existingHabit -> {
-                    boolean wasCompleted = existingHabit.isCompleted();
-                    boolean isCompleted = habitDetails.isCompleted();
                     User user = existingHabit.getUser();
                     
                     if (topicIds != null && !topicIds.isEmpty()) {
@@ -77,18 +81,18 @@ public class HabitServiceImpl implements HabitService {
                     
                     existingHabit.setTitle(habitDetails.getTitle());
                     existingHabit.setDescription(habitDetails.getDescription());
+                    existingHabit.setCompleted(habitDetails.isCompleted());
+
+                    boolean weekdaysChanged = !existingHabit.getWeekdays().equals(habitDetails.getWeekdays());
                     existingHabit.setWeekdays(habitDetails.getWeekdays());
-                    existingHabit.setCompleted(isCompleted);
-                    
-                    if (wasCompleted != isCompleted) {
-                        if (isCompleted) {
-                            levelService.addPoints(user, LevelServiceImpl.HABIT_COMPLETION_POINTS);
-                        } else {
-                            levelService.removePoints(user, LevelServiceImpl.HABIT_COMPLETION_POINTS);
-                        }
+
+                    Habit updatedHabit = habitRepository.save(existingHabit);
+
+                    if (weekdaysChanged) {
+                        habitInstanceService.generateHabitInstances(updatedHabit.getId());
                     }
-                    
-                    return habitRepository.save(existingHabit);
+
+                    return updatedHabit;
                 });
     }
 
@@ -97,9 +101,8 @@ public class HabitServiceImpl implements HabitService {
     public boolean deleteHabit(Long id) {
         return habitRepository.findById(id)
                 .map(habit -> {
-                    if (habit.isCompleted()) {
-                        levelService.removePoints(habit.getUser(), LevelServiceImpl.HABIT_COMPLETION_POINTS);
-                    }
+                    habitInstanceService.deleteHabitInstancesByHabitId(habit.getId());
+                    
                     habitRepository.delete(habit);
                     return true;
                 })
@@ -109,5 +112,30 @@ public class HabitServiceImpl implements HabitService {
     @Override
     public List<Habit> getAllHabitsByUserId(Long id) {
         return habitRepository.findAllByUserId(id);
+    }
+
+    @Override
+    @Transactional
+    public Habit resetHabit(Long id) {
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Habit not found"));
+        
+        habit.setCompleted(false);
+        Habit updatedHabit = habitRepository.save(habit);
+
+        habitInstanceService.generateHabitInstances(updatedHabit.getId());
+        
+        return updatedHabit;
+    }
+
+    @Override
+    @Transactional
+    public Habit regenerateHabitInstances(Long id) {
+        Habit habit = habitRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        habitInstanceService.generateHabitInstances(habit.getId());
+        
+        return habit;
     }
 }

@@ -6,6 +6,7 @@ import com.tracktopiasapi.one.services.HabitService;
 import com.tracktopiasapi.one.web.dto.HabitCreationDto;
 import com.tracktopiasapi.one.web.dto.HabitDto;
 import com.tracktopiasapi.one.model.mapper.HabitMapper;
+import com.tracktopiasapi.one.services.HabitInstanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/habits")
@@ -20,6 +22,7 @@ import java.util.List;
 public class HabitController {
     private final HabitService habitService;
     private final HabitMapper habitMapper;
+    private final HabitInstanceService habitInstanceService;
 
     @GetMapping
     public ResponseEntity<List<HabitDto>> getAllHabitsByUserId(
@@ -67,5 +70,44 @@ public class HabitController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+    
+    @PostMapping("/{id}/reset")
+    public ResponseEntity<HabitDto> resetHabit(@PathVariable Long id) {
+        try {
+            Habit habit = habitService.resetHabit(id);
+            return ResponseEntity.ok(habitMapper.toHabitDTO(habit));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @PostMapping("/{id}/regenerate")
+    public ResponseEntity<HabitDto> regenerateHabitInstances(@PathVariable Long id) {
+        try {
+            Habit habit = habitService.regenerateHabitInstances(id);
+            return ResponseEntity.ok(habitMapper.toHabitDTO(habit));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @GetMapping("/{id}/streak")
+    public ResponseEntity<Map<String, Integer>> getHabitStreak(@PathVariable Long id) {
+        return ResponseEntity.of(habitService.getHabitById(id)
+                .map(habit -> Map.of(
+                    "currentStreak", habit.getCurrentStreak(),
+                    "bestStreak", habit.getBestStreak()
+                )));
+    }
+    
+    @PostMapping("/{id}/update-streak")
+    public ResponseEntity<HabitDto> updateHabitStreak(@PathVariable Long id) {
+        try {
+            habitInstanceService.updateHabitStreaks(id);
+            return ResponseEntity.of(habitService.getHabitById(id).map(habitMapper::toHabitDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }

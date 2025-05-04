@@ -11,5 +11,8 @@ public class HabitDto {
     private String description;
     private List<String> weekdays;
     private boolean completed;
+    private int currentStreak;
+    private int bestStreak;
+    private boolean streakBroken;
     private Set<TopicDto> topics;
 }

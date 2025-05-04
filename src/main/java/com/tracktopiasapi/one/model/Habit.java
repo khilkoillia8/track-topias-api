@@ -34,6 +34,15 @@ public class Habit {
     @Column(nullable = false)
     private boolean completed;
 
+    @Column(nullable = false)
+    private int currentStreak = 0;
+    
+    @Column(nullable = false)
+    private int bestStreak = 0;
+    
+    @Column(nullable = true)
+    private boolean streakBroken = false;
+
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -45,4 +54,17 @@ public class Habit {
         inverseJoinColumns = @JoinColumn(name = "topic_id")
     )
     private Set<Topic> topics = new HashSet<>();
+    
+    public void increaseStreak() {
+        this.currentStreak++;
+        if (this.currentStreak > this.bestStreak) {
+            this.bestStreak = this.currentStreak;
+        }
+        this.streakBroken = false;
+    }
+    
+    public void resetStreak() {
+        this.currentStreak = 0;
+        this.streakBroken = true;
+    }
 }
