@@ -22,10 +22,17 @@ public class MissionController {
     private final MissionMapper missionMapper;
 
     @GetMapping
-    public ResponseEntity<List<MissionDto>> getAllMissionsByUserId(
+    public ResponseEntity<List<MissionDto>> getAllMissionsByAuthUserId(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         var missions = missionService.getAllMissionsByUserId(userDetails.getId());
+        return ResponseEntity.ok(missionMapper.toMissionDTOList(missions));
+    }
+    @GetMapping("/user/{id}")
+    public ResponseEntity<List<MissionDto>> getAllMissionsByUserId(
+            @PathVariable Long id
+    ) {
+        var missions = missionService.getAllMissionsByUserId(id);
         return ResponseEntity.ok(missionMapper.toMissionDTOList(missions));
     }
 

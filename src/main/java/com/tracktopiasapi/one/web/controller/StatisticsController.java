@@ -39,12 +39,18 @@ public class StatisticsController {
         return ResponseEntity.ok(statisticsService.getCompletedMissionsByTopic(userDetails.getId()));
     }
 
+    @GetMapping("/user/{id}")
+    public ResponseEntity<UserStatisticsDto> getUserStatistics(@PathVariable Long id) {
+        return ResponseEntity.ok(statisticsService.getUserStatistics(id));
+    }
+
     @GetMapping
     public ResponseEntity<UserStatisticsDto> getUserStatistics(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        System.out.println(2);
         return ResponseEntity.ok(statisticsService.getUserStatistics(userDetails.getId()));
     }
-    
+
     @GetMapping("/habit-instances")
     public ResponseEntity<UserHabitInstanceStatisticsDto> getHabitInstanceStatistics(
             @AuthenticationPrincipal UserDetailsImpl userDetails) {

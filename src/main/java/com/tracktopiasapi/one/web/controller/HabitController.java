@@ -7,6 +7,7 @@ import com.tracktopiasapi.one.web.dto.HabitCreationDto;
 import com.tracktopiasapi.one.web.dto.HabitDto;
 import com.tracktopiasapi.one.model.mapper.HabitMapper;
 import com.tracktopiasapi.one.services.HabitInstanceService;
+import com.tracktopiasapi.one.web.dto.MissionDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,14 @@ public class HabitController {
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         var habits = habitService.getAllHabitsByUserId(userDetails.getId());
+        return ResponseEntity.ok(habitMapper.toHabitDTOList(habits));
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<List<HabitDto>> getAllHabitsByUserId(
+            @PathVariable Long id
+    ) {
+        var habits = habitService.getAllHabitsByUserId(id);
         return ResponseEntity.ok(habitMapper.toHabitDTOList(habits));
     }
 
