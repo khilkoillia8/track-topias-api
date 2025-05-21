@@ -29,7 +29,10 @@ public class HabitController {
     public ResponseEntity<List<HabitDto>> getAllHabitsByUserId(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
+
         var habits = habitService.getAllHabitsByUserId(userDetails.getId());
+        System.out.println(habits);
+        System.out.println(habitMapper.toHabitDTOList(habits));
         return ResponseEntity.ok(habitMapper.toHabitDTOList(habits));
     }
 
